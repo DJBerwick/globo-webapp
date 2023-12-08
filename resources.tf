@@ -42,15 +42,12 @@ resource "aws_instance" "main" {
     "Name" = "${local.name_prefix}-webapp-${count.index}"
   })
 
-  # Provisioner Stuff
-  connection {
-    type        = "ssh"
-    user        = "ec2-user"
-    port        = "22"
-    host        = self.public_ip
-    private_key = module.ssh_keys.private_key_openssh
-  }
-  }
+  user_data_replace_on_change = true
+
+  user_data = templatefile("./templates/userdata.sh", {
+    playbook_repository = var.playbook_repository
+  })
+}
 
 resource "terraform_data" "webapp" {
     triggers_replace = [
@@ -70,7 +67,6 @@ resource "terraform_data" "webapp" {
     ]
     on_failure = continue
   }
-
 }
 
 resource "aws_lb" "main" {
